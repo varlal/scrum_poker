@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Scrum Poker</title>
+  <link rel="stylesheet"
+href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+  <style>
+ 
+ 	.selectCard {
+		font-size:20px;
+		background-color:DodgerBlue;
+  	}
+	
+	.freeCard {
+		font-size:20px;
+		background-color:lightblue;
+  	}
+	
+ 	.flexiblebox {
+  		display: -webkit-flex;
+  		display: flex;
+  		-webkit-align-items: center; 		/* 縦方向中央揃え（Safari用） */
+  		align-items: center; 				/* 縦方向中央揃え */
+  		-webkit-justify-content: center; 	/* 横方向中央揃え（Safari用） */
+  		justify-content: center; 			/* 横方向中央揃え */
+		width: 90px;
+		height: 120px;
+		border-radius: 5px;       		/* CSS3 */  
+    	-webkit-border-radius: 5px;   	/* Safari,Google Chrome用 */  
+    	-moz-border-radius: 5px;   		/* Firefox用 */  
+  	}
+
+	.onTable {
+		height: 280px;
+		width: 100%;
+		background-color:lightgreen;
+		border-radius: 5px;       		/* CSS3 */  
+    	-webkit-border-radius: 5px;   	/* Safari,Google Chrome用 */  
+    	-moz-border-radius: 5px;   		/* Firefox用 */  
+	}
+
+	.tableCloseCard {
+		background-color:DodgerBlue;
+		margin: 9px;
+	}
+	
+	.tableOpenCard {
+		background-color:lightblue;
+		margin: 9px;
+	}
+
+	.inCardNumber{
+		font-size:20px;
+		text-align : center;
+	}
+
+	.inCardName{
+		font-size:8px;
+		text-align : center
+	}
+
+  </style>
+</head>
+<body>
+  <!---------------------- HEADER -------------------------->
+  <div id='head' class="container-fluid">
+ 	<div class="row" style="background-color:lightgray;">
+    	<div class="col-sm-3"><h1>Scrum Poker</h1></div>
+		<div class="col-sm-7" style="margin-top:24px;">
+			<button id="openbtn" type="button" class="btn btn-primary">Open Cards</button>
+			<button id="clearbtn" type="button" class="btn btn-info">Clear</button>
+		</div>
+    	<div id="changeName" class="col-sm-2" style="margin-top:24px;"><p id="name">ssakoda</p></div>
+  	</div> 
+  </div>
+  
+  <!---------------------- CONTENTS -------------------------->
+  <div id='contents'>
+  	<div id='table-field' style="margin:20px;">
+  		<h3 id="TableFieldStatus" style="margin:10px;">Table Field</h3>
+		<div id="onTable" class="row onTable"></div>
+  	</div>
+   	<div id='hand-field' style="margin-top:10px;">
+  		<h3 style="margin:20px;">Select your number!</h3>
+		<div class="row">
+    		<div class="col-sm-1"></div>
+			<div id="card-1/2" class="col-sm-1 handcard"><div class="flexiblebox freeCard">1/2</div></div>
+    		<div id="card-1" class="col-sm-1 handcard"><div class="flexiblebox freeCard">1</div></div>
+    		<div id="card-2" class="col-sm-1 handcard"><div class="flexiblebox freeCard">2</div></div>
+			<div id="card-3" class="col-sm-1 handcard"><div class="flexiblebox freeCard">3</div></div>
+    		<div id="card-5" class="col-sm-1 handcard"><div class="flexiblebox freeCard">5</div></div>
+    		<div id="card-8" class="col-sm-1 handcard"><div class="flexiblebox freeCard">8</div></div>
+			<div id="card-13" class="col-sm-1 handcard"><div class="flexiblebox freeCard">13</div></div>
+    		<div id="card-20" class="col-sm-1 handcard"><div class="flexiblebox freeCard">20</div></div>
+    		<div id="card-Inf" class="col-sm-1 handcard"><div class="flexiblebox freeCard">Inf</div></div>
+			<div id="card-Coffee" class="col-sm-1 handcard"><div class="flexiblebox freeCard">Coffee</div></div>
+    		<div class="col-sm-1"></div>
+  		</div> 
+  	</div>
+  </div>
+
+  <!---------------------- FOOTER -------------------------->
+  <div id='foot' class='container-fluid' style="margin-top:60px;">
+  	<div class="row" style="padding:10px; background-color:lightgray;" >
+    	<div class="col-sm-2">Scrum Poker</div>
+    	<div class="col-sm-8">@ssakoda</div>
+    	<div class="col-sm-2">help</div>
+  	</div>  
+  </div>
+  <div id="chatLogs" style="background-color:lightgreen;"></div>
+  
+  <script type="text/javascript">
+        var socket = io.connect();
+		var name="ssakoda";
+
+        socket.on("server_to_client", function(data){
+			// DEBUG RECV appendMsg(data);						
+			if(data.value === "open"){
+				//open table card
+				$("#TableFieldStatus").text("Table Field (Opened)");
+				$("#onTable").empty();
+				for(var card in data.cards){
+					$("#onTable").append('<div class="flexiblebox tableOpenCard col-sm-1"><div><p class="inCardNumber"><b>'+data.cards[card].split("-")[1]+'</b></p><p class="inCardName">'+card+'</p></div></div>');
+				}
+			}else if(data.value === "clear"){
+				//clear table and hand card
+				$("#TableFieldStatus").text("Table Field");
+				$(".handcard").children("div").removeClass('selectCard').addClass('freeCard');
+				$("#onTable").empty();
+			}else{
+				//table update
+				$("#onTable").empty();
+				for(var card in data.value){
+					 $("#onTable").append('<div class="flexiblebox tableCloseCard col-sm-1">'+card+'</div>');
+				}
+			}
+		});
+    
+        function appendMsg(text) {
+            $("#chatLogs").append("<div>" + JSON.stringify(text) + "</div>");
+        }
+		
+		$(".handcard,.btn").on("click",function(e){
+			var message = $(this).attr('id');
+			if(message.indexOf("card") === 0){
+				//only div selected card add class "selectCard"
+				if($(this).children("div").hasClass('selectCard')){
+					$(".handcard").children("div").removeClass('selectCard').addClass('freeCard');
+					message="delete";	
+				}else{
+					$(".handcard").children("div").removeClass('selectCard').addClass('freeCard');
+					$(this).children("div").removeClass('freeCard').addClass('selectCard');
+				}
+
+				if($("#TableFieldStatus").text().indexOf("Table Field (Opened)")===0){
+					message+="-(Opened)";
+				}
+			}
+			//DEBUG SEND appendMsg(message);
+			socket.emit("client_to_server", {name: name,value : message});
+			e.preventDefault();
+		});
+
+        $("#changeName").on("click",function(){
+			name="debugUser-"+ Math.floor(Math.random()*101);
+			$("#name").text(name);
+		});
+        
+    </script>
+</body>
+</html>
+
